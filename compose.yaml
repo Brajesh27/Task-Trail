@@ -1,0 +1,32 @@
+# Runs TaskTrail with a real MySQL database:  docker compose up --build
+# Then open http://localhost:8080. Data is kept in the "db-data" volume between runs.
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: tasktrail
+      MYSQL_USER: tasktrail
+      MYSQL_PASSWORD: tasktrail
+      MYSQL_ROOT_PASSWORD: change-me
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      retries: 20
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql
+      DB_URL: jdbc:mysql://db:3306/tasktrail
+      DB_USERNAME: tasktrail
+      DB_PASSWORD: tasktrail
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:

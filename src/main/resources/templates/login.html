@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>TaskTrail login</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"></head>
+<body>
+    <h1 th:text="${title}">Login</h1>
+
+    <p th:if="${param.error}" style="color: red;">Wrong email or password.</p>
+    <p th:if="${param.wrongRole}" style="color: red;"
+       th:text="${as == 'employer'} ? 'That account is not an employer. Use the Employee login.' : 'That account is not an employee. Use the Employer login.'">wrong screen</p>
+
+    <form th:action="@{/login}" method="post">
+        <input type="hidden" name="as" th:value="${as}">
+        <p><label>Email <input type="email" name="username" required autofocus></label></p>
+        <p><label>Password <input type="password" name="password" required></label></p>
+        <button type="submit">Log in</button>
+    </form>
+
+    <p><a href="/">Back to home</a></p>
+</body>
+</html>

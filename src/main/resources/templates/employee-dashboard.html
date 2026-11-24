@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>My tasks</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"></head>
+<body>
+    <div class="topbar">
+        <h1>My tasks</h1>
+        <a th:href="@{/account/password}">Change password</a>
+    </div>
+    <p>Welcome, <strong th:text="${me.name}">name</strong></p>
+    <p th:if="${param.updated}" style="color: green;">Status updated.</p>
+    <p th:if="${param.passwordChanged}" style="color: green;">Password changed.</p>
+
+    <form class="filters" th:action="@{/employee/dashboard}" th:object="${filter}" method="get">
+        <input type="text" th:field="*{q}" placeholder="Search my tasks">
+        <select th:field="*{status}">
+            <option value="">Any status</option>
+            <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}">status</option>
+        </select>
+        <select th:field="*{priority}">
+            <option value="">Any priority</option>
+            <option th:each="p : ${priorities}" th:value="${p}" th:text="${p}">priority</option>
+        </select>
+        <label class="check"><input type="checkbox" th:field="*{late}"> Late only</label>
+        <button type="submit">Filter</button>
+        <a th:if="${filter.active}" th:href="@{/employee/dashboard}">Clear</a>
+    </form>
+
+    <p th:if="${tasks.isEmpty()}" th:text="${filter.active} ? 'No tasks match.' : 'No tasks assigned to you.'">No tasks.</p>
+    <table th:unless="${tasks.isEmpty()}">
+        <tr><th>Task</th><th>Details</th><th>Priority</th><th>Due</th><th>Carried</th><th>Status</th></tr>
+        <tr th:each="t : ${tasks}">
+            <td><a th:href="@{/tasks/{id}(id=${t.id})}" th:text="${t.title}">title</a></td>
+            <td th:text="${t.description}">details</td>
+            <td><span class="badge" th:classappend="${'priority-' + t.priority}" th:text="${t.priority}">priority</span></td>
+            <td class="nowrap" th:text="${t.dueDate}">date</td>
+            <td th:text="${t.carryForwardCount == 0 ? '-' : t.carryForwardCount + 'x (was due ' + #temporals.format(t.originalDueDate, 'yyyy-MM-dd') + ')'}">-</td>
+            <td>
+                <form th:action="@{/employee/tasks/{id}/status(id=${t.id})}" method="post">
+                    <select name="status">
+                        <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"
+                                th:selected="${s == t.status}">status</option>
+                    </select>
+                    <button type="submit">Update</button>
+                </form>
+            </td>
+        </tr>
+    </table>
+
+    <form th:action="@{/logout}" method="post"><button type="submit">Log out</button></form>
+</body>
+</html>

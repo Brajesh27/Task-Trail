@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add an employee</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+    <h1>Add an employee</h1>
+
+    <form th:action="@{/employer/employees}" th:object="${employeeForm}" method="post">
+        <p>
+            <label>Name<br><input type="text" th:field="*{name}"></label>
+            <span class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+        </p>
+        <p>
+            <label>Email<br><input type="email" th:field="*{email}"></label>
+            <span class="error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+        </p>
+        <p>
+            <label>Temporary password<br><input type="password" th:field="*{password}"></label>
+            <span class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+        </p>
+        <button type="submit">Add employee</button>
+    </form>
+
+    <p><a th:href="@{/employer/dashboard}">Back to dashboard</a></p>
+</body>
+</html>

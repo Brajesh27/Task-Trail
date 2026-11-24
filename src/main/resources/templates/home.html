@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>TaskTrail</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+    <h1>TaskTrail</h1>
+    <p>Today is <strong th:text="${today}">date</strong>.</p>
+
+    <div class="cards">
+        <div class="card">
+            <h2>Employer</h2>
+            <p>Assign tasks and monitor your team.</p>
+            <a th:href="@{/login(as='employer')}">Employer login &rarr;</a>
+        </div>
+        <div class="card">
+            <h2>Employee</h2>
+            <p>See your tasks and update progress.</p>
+            <a th:href="@{/login(as='employee')}">Employee login &rarr;</a>
+        </div>
+    </div>
+</body>
+</html>

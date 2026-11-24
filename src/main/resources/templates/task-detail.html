@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title th:text="${task.title}">Task</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"></head>
+<body>
+    <h1 th:text="${task.title}">Task title</h1>
+    <p>
+        <span class="badge" th:classappend="${'priority-' + task.priority}" th:text="${task.priority}">priority</span>
+        <span class="badge" th:classappend="${'status-' + task.status}" th:text="${task.status}">status</span>
+    </p>
+
+    <div class="card details">
+        <p th:if="${task.description}" th:text="${task.description}">details</p>
+        <p><strong>Assigned to:</strong> <span th:text="${task.assignee.name}">who</span></p>
+        <p><strong>Due:</strong> <span th:text="${task.dueDate}">date</span>
+            <span th:if="${task.carryForwardCount > 0}"
+                  th:text="'(carried ' + ${task.carryForwardCount} + 'x, first due ' + ${task.originalDueDate} + ')'">carried</span></p>
+        <p th:if="${employer}"><a th:href="@{/employer/tasks/{id}/edit(id=${task.id})}">Edit this task</a></p>
+    </div>
+
+    <h2 id="comments">Comments</h2>
+    <p th:if="${task.comments.isEmpty()}">No comments yet.</p>
+    <div class="comment" th:each="c : ${task.comments}">
+        <div class="meta"><strong th:text="${c.author.name}">name</strong>
+            &middot; <span th:text="${#temporals.format(c.createdAt, 'yyyy-MM-dd HH:mm')}">when</span></div>
+        <p th:text="${c.text}">comment</p>
+    </div>
+
+    <p th:if="${param.commentError}" style="color: red;">A comment must be 1 to 500 characters.</p>
+    <form th:action="@{/tasks/{id}/comments(id=${task.id})}" method="post">
+        <label>Add a comment<br><textarea name="text" rows="3" maxlength="500" required></textarea></label>
+        <p><button type="submit">Post comment</button></p>
+    </form>
+
+    <h2>History</h2>
+    <ul class="history">
+        <li th:each="e : ${task.events}">
+            <span class="meta" th:text="${#temporals.format(e.happenedAt, 'yyyy-MM-dd HH:mm')}">when</span>
+            <strong th:text="${e.actor}">who</strong> <span th:text="${e.description}">what</span>
+        </li>
+    </ul>
+
+    <p><a th:href="@{${dashboard}}">Back to dashboard</a></p>
+</body>
+</html>

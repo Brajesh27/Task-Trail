@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Employer dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script th:src="@{/js/chart.umd.min.js}"></script></head>
+<body>
+    <div class="topbar">
+        <h1>Employer dashboard</h1>
+        <a th:href="@{/account/password}">Change password</a>
+    </div>
+    <p>Welcome, <strong th:text="${me.name}">name</strong></p>
+
+    <p th:if="${param.added}" style="color: green;">Employee added.</p>
+    <p th:if="${param.assigned}" style="color: green;">Task assigned.</p>
+    <p th:if="${param.updated}" style="color: green;">Task updated.</p>
+    <p th:if="${param.deleted}" style="color: green;">Task deleted.</p>
+    <p th:if="${param.passwordChanged}" style="color: green;">Password changed.</p>
+
+    <h2>Overview</h2>
+    <div class="stats">
+        <div class="stat"><strong th:text="${summary.total}">0</strong><span>tasks</span></div>
+        <div class="stat"><strong th:text="${summary.done}">0</strong><span>done</span></div>
+        <div class="stat"><strong th:text="${summary.pending}">0</strong><span>pending</span></div>
+        <div class="stat"><strong th:text="${summary.carriedOpen}">0</strong><span>carried forward, still open</span></div>
+    </div>
+
+    <div class="charts">
+        <div class="chart-card"><h3>Tasks per employee</h3><canvas id="teamChart"></canvas></div>
+        <div class="chart-card"><h3>All tasks by status</h3><canvas id="statusChart"></canvas></div>
+    </div>
+
+    <h2>Your team</h2>
+    <p><a th:href="@{/employer/employees/new}">+ Add an employee</a></p>
+    <table>
+        <tr><th>Employee</th><th>Total</th><th>To do</th><th>In progress</th><th>Done</th><th>Carried, open</th><th>Completion</th></tr>
+        <tr th:each="s : ${teamStats}">
+            <td th:text="${s.employee.name}">name</td>
+            <td th:text="${s.total}">0</td>
+            <td th:text="${s.todo}">0</td>
+            <td th:text="${s.inProgress}">0</td>
+            <td th:text="${s.done}">0</td>
+            <td th:text="${s.carriedOpen}">0</td>
+            <td th:text="${s.completionPercent} + '%'">0%</td>
+        </tr>
+    </table>
+
+    <h2>Needs attention</h2>
+    <p th:if="${attention.isEmpty()}">Nothing has been carried forward. Nice.</p>
+    <ul th:unless="${attention.isEmpty()}">
+        <li th:each="t : ${attention}"
+            th:text="${t.title} + ' (' + ${t.assignee.name} + ') carried ' + ${t.carryForwardCount} + 'x, first due ' + ${t.originalDueDate}">task</li>
+    </ul>
+
+    <h2>All tasks</h2>
+    <p><a th:href="@{/employer/tasks/new}">+ Assign a new task</a></p>
+
+    <!-- method="get": the choices go into the URL, so a filtered view can be bookmarked -->
+    <form class="filters" th:action="@{/employer/dashboard}" th:object="${filter}" method="get">
+        <input type="text" th:field="*{q}" placeholder="Search title or details">
+        <select th:field="*{assigneeId}">
+            <option value="">Any employee</option>
+            <option th:each="e : ${employees}" th:value="${e.id}" th:text="${e.name}">name</option>
+        </select>
+        <select th:field="*{status}">
+            <option value="">Any status</option>
+            <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}">status</option>
+        </select>
+        <select th:field="*{priority}">
+            <option value="">Any priority</option>
+            <option th:each="p : ${priorities}" th:value="${p}" th:text="${p}">priority</option>
+        </select>
+        <label class="check"><input type="checkbox" th:field="*{late}"> Late only</label>
+        <button type="submit">Filter</button>
+        <a th:if="${filter.active}" th:href="@{/employer/dashboard}">Clear</a>
+    </form>
+
+    <p th:if="${tasks.isEmpty()}">No tasks match.</p>
+    <table th:unless="${tasks.isEmpty()}">
+        <tr><th>Task</th><th>Assigned to</th><th>Priority</th><th>Due</th><th>Carried</th><th>Status</th><th></th></tr>
+        <tr th:each="t : ${tasks}">
+            <td><a th:href="@{/tasks/{id}(id=${t.id})}" th:text="${t.title}">title</a></td>
+            <td th:text="${t.assignee.name}">who</td>
+            <td><span class="badge" th:classappend="${'priority-' + t.priority}" th:text="${t.priority}">priority</span></td>
+            <td class="nowrap" th:text="${t.dueDate}">date</td>
+            <td th:text="${t.carryForwardCount == 0 ? '-' : t.carryForwardCount + 'x (was due ' + #temporals.format(t.originalDueDate, 'yyyy-MM-dd') + ')'}">-</td>
+            <td><span class="badge" th:classappend="${'status-' + t.status}" th:text="${t.status}">status</span></td>
+            <td><div class="actions">
+                <a th:href="@{/employer/tasks/{id}/edit(id=${t.id})}">Edit</a>
+                <form th:action="@{/employer/tasks/{id}/delete(id=${t.id})}" method="post"
+                      onsubmit="return confirm('Delete this task? This cannot be undone.');">
+                    <button type="submit" class="danger">Delete</button>
+                </form>
+            </div></td>
+        </tr>
+    </table>
+
+    <form th:action="@{/logout}" method="post"><button type="submit">Log out</button></form>
+
+    <!-- th:inline="javascript" lets Thymeleaf write Java values into the script as JSON -->
+    <script th:inline="javascript">
+        const chart = /*[[${chart}]]*/ {names: [], todo: [], inProgress: [], done: []};
+        const total = (list) => list.reduce((a, b) => a + b, 0);
+
+        new Chart(document.getElementById('teamChart'), {
+            type: 'bar',
+            data: {
+                labels: chart.names,
+                datasets: [
+                    {label: 'To do', data: chart.todo, backgroundColor: '#9ca3af'},
+                    {label: 'In progress', data: chart.inProgress, backgroundColor: '#f59e0b'},
+                    {label: 'Done', data: chart.done, backgroundColor: '#10b981'}
+                ]
+            },
+            options: {scales: {x: {stacked: true}, y: {stacked: true, beginAtZero: true, ticks: {precision: 0}}}}
+        });
+
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['To do', 'In progress', 'Done'],
+                datasets: [{data: [total(chart.todo), total(chart.inProgress), total(chart.done)],
+                            backgroundColor: ['#9ca3af', '#f59e0b', '#10b981']}]
+            }
+        });
+    </script>
+</body>
+</html>

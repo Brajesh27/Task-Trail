@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${taskId == null} ? 'Assign a task' : 'Edit task'">Assign a task</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+    <h1 th:text="${taskId == null} ? 'Assign a task' : 'Edit task'">Assign a task</h1>
+
+    <!-- New task posts to /employer/tasks, an edit posts to /employer/tasks/{id} -->
+    <form th:action="${taskId == null} ? @{/employer/tasks} : @{/employer/tasks/{id}(id=${taskId})}"
+          th:object="${taskForm}" method="post">
+        <p>
+            <label>Title<br><input type="text" th:field="*{title}"></label>
+            <span class="error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+        </p>
+        <p>
+            <label>Description<br><textarea th:field="*{description}" rows="3" cols="40"></textarea></label>
+            <span class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></span>
+        </p>
+        <p>
+            <label>Due date<br><input type="date" th:field="*{dueDate}"></label>
+            <span class="error" th:if="${#fields.hasErrors('dueDate')}" th:errors="*{dueDate}"></span>
+        </p>
+        <p>
+            <label>Priority<br>
+                <select th:field="*{priority}">
+                    <option th:each="p : ${priorities}" th:value="${p}" th:text="${p}">priority</option>
+                </select>
+            </label>
+            <span class="error" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}"></span>
+        </p>
+        <p>
+            <label>Assign to<br>
+                <select th:field="*{assigneeId}">
+                    <option value="">-- choose an employee --</option>
+                    <option th:each="e : ${employees}" th:value="${e.id}" th:text="${e.name}">name</option>
+                </select>
+            </label>
+            <span class="error" th:if="${#fields.hasErrors('assigneeId')}" th:errors="*{assigneeId}"></span>
+        </p>
+        <button type="submit" th:text="${taskId == null} ? 'Assign task' : 'Save changes'">Assign task</button>
+    </form>
+
+    <p><a th:href="@{/employer/dashboard}">Back to dashboard</a></p>
+</body>
+</html>
